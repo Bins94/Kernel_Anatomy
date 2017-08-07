@@ -31,4 +31,4 @@ P point to the page guard near the start of stack( low memory).The access of thi
 [   73.732258] kernel stack overflow (page fault): 0000 [#2] SMP
 ...
 ```  
-The log com
+PageGuard access will invoke a page fault which handle several kind of illegal address access( include normal).
