@@ -24,8 +24,8 @@ unsigned int blocksiz = 1 << 22, framesiz = 1 << 11;
 unsigned int blocknum = 64;
 
 int main(void) {
-	int sk, error, len, ret, vers = TPACKET_V3;
-	struct tpacket_req3 a;
+  int sk, error, len, ret, vers = TPACKET_V2, hdr = PACKET_VNET_HDR;
+	struct tpacket_req a;
 	uint8_t *buf;
 	struct sockaddr src;
 	struct pollfd pfd;
@@ -34,21 +34,32 @@ int main(void) {
 	a.tp_frame_size = framesiz;
 	a.tp_block_nr = blocknum;
 	a.tp_frame_nr = (blocksiz * blocknum) / framesiz;
-	a.tp_retire_blk_tov = 60;
-	a.tp_feature_req_word = TP_FT_REQ_FILL_RXHASH;
+	/*
+	 * TPACKET_V1/V2 with tpacket_req, TPACKET_V3 with tpacket_req3
+         *a.tp_retire_blk_tov = 60;
+	 *a.tp_feature_req_word = TP_FT_REQ_FILL_RXHASH;
+	 */
 
 	len = sizeof(struct sockaddr);
 	sk = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	if (!sk)
                 printf("Socket create failed!\n");
 
+	/*set PACKET_VERSION*/
 	ret = setsockopt(sk, SOL_PACKET, PACKET_VERSION, &vers, sizeof(vers));
 	if (ret < 0) {
 		perror("[0]setsockopt");
 		exit(1);
 	}
 
-	ret = setsockopt(sk, SOL_PACKET, PACKET_RX_RING, &a, sizeof(struct tpacket_req3));
+	/* set kernel space po->has_vnet_hdr */
+	ret = setsockopt(sk, SOL_PACKET, PACKET_VNET_HDR, &hdr, sizeof(hdr));
+	if (ret < 0) {
+		perror("[1]setsockopt");
+		exit(1);
+	}
+
+	ret = setsockopt(sk, SOL_PACKET, PACKET_RX_RING, &a, sizeof(struct tpacket_req));
 	if (ret < 0) {
 		perror("[1]setsockopt");
 		exit(1);
