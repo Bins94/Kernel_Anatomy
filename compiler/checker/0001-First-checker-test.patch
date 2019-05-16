@@ -1,0 +1,91 @@
+From b5de0bedf4c129ff41a868409f28bdf8a8bb4abe Mon Sep 17 00:00:00 2001
+From: Bins94 <kaipeng94@gmail.com>
+Date: Wed, 15 May 2019 04:17:23 -0400
+Subject: [PATCH] First checker test
+
+---
+ .../clang/StaticAnalyzer/Checkers/Checkers.td |  4 ++
+ .../StaticAnalyzer/Checkers/CMakeLists.txt    |  1 +
+ .../lib/StaticAnalyzer/Checkers/MyChecker.cpp | 43 +++++++++++++++++++
+ 3 files changed, 48 insertions(+)
+ create mode 100644 clang/lib/StaticAnalyzer/Checkers/MyChecker.cpp
+
+diff --git a/clang/include/clang/StaticAnalyzer/Checkers/Checkers.td b/clang/include/clang/StaticAnalyzer/Checkers/Checkers.td
+index 0b16a2a4292..156b7b6b53f 100644
+--- a/clang/include/clang/StaticAnalyzer/Checkers/Checkers.td
++++ b/clang/include/clang/StaticAnalyzer/Checkers/Checkers.td
+@@ -1221,6 +1221,10 @@ def ReportStmts : Checker<"ReportStmts">,
+   HelpText<"Emits a warning for every statement.">,
+   Documentation<NotDocumented>;
+ 
++def MyChecker : Checker<"MyChecker">,
++  HelpText<"This checker is added by Kaipeng">,
++  Documentation<NotDocumented>;
++
+ } // end "debug"
+ 
+ 
+diff --git a/clang/lib/StaticAnalyzer/Checkers/CMakeLists.txt b/clang/lib/StaticAnalyzer/Checkers/CMakeLists.txt
+index f8201f33c48..e9294e47666 100644
+--- a/clang/lib/StaticAnalyzer/Checkers/CMakeLists.txt
++++ b/clang/lib/StaticAnalyzer/Checkers/CMakeLists.txt
+@@ -84,6 +84,7 @@ add_clang_library(clangStaticAnalyzerCheckers
+   ReturnUndefChecker.cpp
+   RunLoopAutoreleaseLeakChecker.cpp
+   SimpleStreamChecker.cpp
++  MyChecker.cpp
+   SmartPtrModeling.cpp
+   StackAddrEscapeChecker.cpp
+   StdLibraryFunctionsChecker.cpp
+diff --git a/clang/lib/StaticAnalyzer/Checkers/MyChecker.cpp b/clang/lib/StaticAnalyzer/Checkers/MyChecker.cpp
+new file mode 100644
+index 00000000000..c9428c6ce15
+--- /dev/null
++++ b/clang/lib/StaticAnalyzer/Checkers/MyChecker.cpp
+@@ -0,0 +1,43 @@
++#include "clang/StaticAnalyzer/Core/Checker.h"
++#include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
++#include "clang/StaticAnalyzer/Core/CheckerManager.h"
++#include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
++#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
++#include "llvm/ADT/SmallString.h"
++#include "llvm/ADT/StringExtras.h"
++#include "llvm/Support/raw_ostream.h"
++#include "clang/AST/ParentMap.h"
++#include "clang/Basic/TargetInfo.h"
++#include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
++#include <iostream>
++
++using namespace clang;
++using namespace ento;
++
++namespace {
++
++class MyChecker
++  : public Checker< check::PreStmt<CallExpr>,
++		    check::PreCall > {
++  public:
++
++    void checkPreStmt(const CallExpr *CE, CheckerContext &c) const;
++    void checkPreCall(const CallEvent &Call, CheckerContext &c) const;
++};
++} // end anonymous namespace
++
++void MyChecker::checkPreStmt(const CallExpr *CE, CheckerContext &c) const {
++  std::cout << " Message of checkPreStmt, added by me\n ";
++}
++
++void MyChecker::checkPreCall(const CallEvent &Call, CheckerContext &c) const {
++  std::cout << " Message of checkPreCall, added by me\n ";
++}
++
++void ento::registerMyChecker(CheckerManager &mgr) {
++  mgr.registerChecker<MyChecker>();
++}
++
++bool ento::shouldRegisterMyChecker(const LangOptions &LO) {
++  return true;
++}
+-- 
+2.20.1
+
